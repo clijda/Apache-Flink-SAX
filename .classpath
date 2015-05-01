@@ -12,16 +12,38 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="/jmotif-sax"/>
+	<classpathentry kind="lib" path="/home/giacomo/.m2/repository/org/apache/flink/flink-streaming-core/0.8.1/flink-streaming-core-0.8.1.jar" sourcepath="/home/giacomo/.m2/repository/org/apache/flink/flink-streaming-core/0.8.1/flink-streaming-core-0.8.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.apache.flink"/>
+			<attribute name="maven.artifactId" value="flink-streaming-core"/>
+			<attribute name="maven.version" value="0.8.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/home/giacomo/.m2/repository/org/apache/flink/flink-core/0.8.1/flink-core-0.8.1.jar" sourcepath="/home/giacomo/.m2/repository/org/apache/flink/flink-core/0.8.1/flink-core-0.8.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.apache.flink"/>
+			<attribute name="maven.artifactId" value="flink-core"/>
+			<attribute name="maven.version" value="0.8.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/home/giacomo/.m2/repository/org/apache/commons/commons-lang3/3.3.2/commons-lang3-3.3.2.jar" sourcepath="/home/giacomo/.m2/repository/org/apache/commons/commons-lang3/3.3.2/commons-lang3-3.3.2-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.apache.commons"/>
+			<attribute name="maven.artifactId" value="commons-lang3"/>
+			<attribute name="maven.version" value="3.3.2"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

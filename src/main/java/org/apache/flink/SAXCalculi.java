@@ -4,16 +4,28 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class SAXCalculi {
 	
+	private double ds_summation; // squares of time serie items
 	private double ds_sum;
 	private double ds_count;
 	private double ds_avg;
 	private double ds_stDev;
+	public double norm_threshold;
 	
 	public SAXCalculi() {
+		this.ds_summation = 0D;
 		this.ds_sum = 0D;
 		this.ds_count = 0D;
 		this.ds_avg = 0D;
 		this.ds_stDev = 0D;
+		this.norm_threshold = 2.0;
+	}
+	
+	public void setSummation(Double value) {
+		this.ds_summation = value;
+	} 
+	
+	public Double getSummation() {
+		return this.ds_summation;
 	}
 	
 	public void setSum(Double value) {
@@ -53,7 +65,7 @@ public class SAXCalculi {
 	}	
 	
 	public String toString() {
-		return "ds_count: " + this.getCount() + " | ds_sum: " + this.getSum() + " | ds_avg: " + this.getAVG();
+		return "ds_count: " + this.getCount() + " | ds_sum: " + this.getSum() + " | ds_avg: " + this.getAVG() + " | stDev: " + this.getStDev();				 
 		
 	}
 }
