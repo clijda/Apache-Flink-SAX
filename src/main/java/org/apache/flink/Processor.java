@@ -9,11 +9,16 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flink.util.Collector;
+import org.apache.flink.utils.Utils;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
+import org.apache.flink.shaded.com.google.common.collect.Lists;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.WindowedDataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.streaming.api.windowing.helper.Time;
 import org.apache.sax.SAXProcessor;
 import org.apache.sax.NumerosityReductionStrategy;
@@ -22,96 +27,95 @@ import org.apache.sax.SAXRecords;
 import org.apache.sax.SaxRecord;
 
 public class Processor {
-	StreamExecutionEnvironment env;	
+	StreamExecutionEnvironment streamEnv;
+	ExecutionEnvironment env;
 	private static SAXCalculi sax_obj = new SAXCalculi();
 	DataStream<Double> timeSeries;
-	private static ArrayList<Double> ds_list = new ArrayList<Double>();
+	DataSource<Double> timeSeries2;
+	//private static ArrayList<Double> ds_list = new ArrayList<Double>();
 	private static final String COMMA = ", ";
 	WindowedDataStream<Double> window;
+	DataSet<Double> chunk;
+	static Double ds_avg;
+	static Double ds_sum;
+	static Double ds_count;
+	static Double ds_stDev;
+	static Double ds_summation;
 	
 	public Processor(StreamExecutionEnvironment p_env) {
-		this.env = p_env;		
+		//this.streamEnv = p_env;		
+		this.env = ExecutionEnvironment.getExecutionEnvironment();
+		Processor.ds_avg = 0D;
+		Processor.ds_sum = 0D;
+		Processor.ds_stDev = 0D;
+		Processor.ds_count = 0D;
+		Processor.ds_summation = 0D;
 	}	
 	
 	public static void main(String[] args) throws Exception {		
-		Processor p = new Processor(StreamExecutionEnvironment.getExecutionEnvironment());
-		p.timeSeries = p.env
-				.socketTextStream("localhost", 8888)
-				.flatMap(new Splitter());
-		
-		p.startStreamingCollector();
+		Processor p = new Processor(StreamExecutionEnvironment.getExecutionEnvironment());		
+		Utils u = new Utils();
+		p.timeSeries2 = p.env.fromCollection(u.numbersGenerator(50000));
 		p.setup();
-		p.executeSAX();
 		p.env.execute("Giacomo");
 	}
 	
-	private void startStreamingCollector() {
-		// Setup Window parameters
-		// WindowedDataStream<Double> SAXWindow
-		this.window = timeSeries
-				.window(Time.of(10, TimeUnit.SECONDS))
-				.every(Time.of(10, TimeUnit.SECONDS));		
-	}
-	
 	private void setup() throws Exception {					
-		//SAXCalculi sax = new SAXCalculi();
-		// Calcola somme e count
-		this.window.reduceGroup(new CalculiReducer());	
-		this.window.reduceGroup(new MeanReducer());
-		this.window.reduceGroup(new StDevReducer());		
-		ArrayList<Double> NormDataSet = this.norm(this.window);
+		this.timeSeries2.reduceGroup(new CalculiReducer()).print();
 	}		
 	
-	private void executeSAX() throws Exception {	
-		NormalAlphabet na = new NormalAlphabet();
-		NumerosityReductionStrategy nrs = null;
-		SAXProcessor sp = new SAXProcessor();
-		SAXRecords SAXresult = sp.ts2saxViaWindow(ds_list, 120, 7, na.getCuts(5), nrs.fromValue(1), 0.1);
-		
-		  Set<Integer> index = SAXresult.getIndexes();
-		  for (Integer idx : index) {
-		    System.out.println(idx + COMMA + String.valueOf(SAXresult.getByIndex(idx).getPayload()));
-		  }
-		
-		PrintStream fileStream;
-		try {
-		fileStream = new PrintStream(new File("Results/results.txt"));
-		//fileStream.println("Array = [");
-		for (int j = 0; j<SAXresult.size(); j++){
-			fileStream.println(SAXresult.getByIndex(j));
-		}
-		//fileStream.println("]");
-		fileStream.println();
-		} catch (FileNotFoundException e) {
-			// 	TODO Auto-generated catch block
-			e.printStackTrace();
-		}			
-	}
-	
-	private ArrayList<Double> norm(WindowedDataStream<Double> ds) {
-		// calcolare media(ds)
-		// calcolare deviazione_standard(ds)
-		double stDev =sax_obj.getStDev();
-		double mean = sax_obj.getAVG();
-		// Convert DataSet and add it to ds_list
-		this.addDStoList(ds);
-		ArrayList<Double> ds_norm = new ArrayList<Double>();
-		
-		if(stDev < sax_obj.norm_threshold) {			
-			return ds_list;
-		}
-		for(int i=0; i < ds_list.size(); i++) {
-			double element = (ds_list.get(i) - mean)/stDev;
-			ds_norm.add(i, element);
-		}
-		
-		return ds_norm;		
-	}
-	
-	public void addDStoList(WindowedDataStream<Double> ds) {
-		// This reduceGroup iterate over ds and add items to ds_list
-		ds.reduceGroup(new dsConverter());		
-	}
+	   public static class CalculiReducer implements GroupReduceFunction<Double, String> {
+
+			@Override
+			public void reduce(Iterable<Double> values, Collector<String> out)
+					throws Exception {
+				
+				double x = 0D;
+				double stDev = 0D;
+				
+				Iterator<Double> iterator = values.iterator();
+				while(iterator.hasNext()) {
+					double value = iterator.next();
+					double sum = SAXCalculi.getSum();
+					// Add value to SAXCalculi.timeSerie
+					SAXCalculi.timeSerie.add(value);
+					SAXCalculi.setSum(sum+value);
+					SAXCalculi.addCount(1.0);		
+					
+					
+					// Update AVG
+					ds_avg = SAXCalculi.getSum() / SAXCalculi.getCount();
+					SAXCalculi.setAVG(ds_avg);
+					
+					// Update STANDARD DEVIATION		
+					ds_summation += value*value;
+					ds_count = SAXCalculi.getCount();
+					x = (ds_summation - (ds_avg*ds_avg)*ds_count) / (ds_count-1);
+					stDev = Math.sqrt(x);					
+					SAXCalculi.setSummation(ds_summation);
+					SAXCalculi.setStDev(stDev);					
+				}
+						
+				Processor.sax_obj.setAVG(ds_avg);
+				Processor.sax_obj.setCount(ds_count);
+				Processor.sax_obj.setSum(SAXCalculi.getSum());
+				Processor.sax_obj.setSummation(SAXCalculi.getSummation());
+				Processor.sax_obj.setStDev(SAXCalculi.getStDev());
+				
+				// Calculate SAX
+				NormalAlphabet na = new NormalAlphabet();
+				NumerosityReductionStrategy nrs = null;
+				SAXProcessor sp = new SAXProcessor();
+				SAXRecords SAXresult = sp.ts2saxViaWindow(SAXCalculi.normalize(), 120, 7, na.getCuts(5), nrs.fromValue(1), 1);
+				
+				Set<Integer> index = SAXresult.getIndexes();
+				for (Integer idx : index) {
+					String s = idx + COMMA + String.valueOf(SAXresult.getByIndex(idx).getPayload());
+					out.collect(s);
+				}												
+			}		    	
+	    }
+	   	   	   
 		
     public static class Splitter implements FlatMapFunction<String, Double> {
         @Override
@@ -121,77 +125,5 @@ public class Processor {
                 out.collect(Double.parseDouble(value));
             }
         }
-    }	
-    
-    public static class CalculiReducer implements GroupReduceFunction<Double, SAXCalculi> {
-
-		@Override
-		public void reduce(Iterable<Double> values, Collector<SAXCalculi> out)
-				throws Exception {
-			
-			Iterator<Double> iterator = values.iterator();
-			while(iterator.hasNext()) {
-				double value = iterator.next();
-				double sum = sax_obj.getSum();
-				sax_obj.setSum(sum+value);
-				sax_obj.addCount(1.0);
-				out.collect(sax_obj);
-			}
-			
-		}	
-    	
-    }
-    
-    public static class MeanReducer implements GroupReduceFunction<Double, SAXCalculi> {
-
-		@Override
-		public void reduce(Iterable<Double> values, Collector<SAXCalculi> out)
-				throws Exception {
-			
-			double avg = sax_obj.getSum() / sax_obj.getCount();
-			sax_obj.setAVG(avg);
-			out.collect(sax_obj);						
-		}	
-    	
-    }
-    
-    public static class StDevReducer implements GroupReduceFunction<Double, SAXCalculi> {
-		@Override
-		public void reduce(Iterable<Double> values, Collector<SAXCalculi> out)
-				throws Exception {
-			Iterator<Double> iterator = values.iterator();
-			//double summation = 0D;
-			double ds_avg = sax_obj.getAVG();
-			double ds_count = sax_obj.getCount();			
-			double ds_summation = sax_obj.getSummation();
-			while(iterator.hasNext()) {
-				double value = iterator.next();
-				ds_summation += value*value;
-			}
-			
-			// Calculate Standard Deviation
-			double x = (ds_summation - (ds_avg*ds_avg)*ds_count) / (ds_count-1);
-			double stDev = Math.sqrt(x);
-			
-			sax_obj.setSummation(ds_summation);
-			sax_obj.setStDev(stDev);
-			out.collect(sax_obj);
-		}
-    }
-    
-    
-    public static class dsConverter implements GroupReduceFunction<Double, Double> {
-
-		@Override
-		public void reduce(Iterable<Double> values, Collector<Double> out)
-				throws Exception {			
-			// Clean ds_list
-			ds_list.clear();		
-			while(values.iterator().hasNext()) {
-				double value = values.iterator().next();
-				ds_list.add(value);
-				out.collect(value);
-			} 			
-		}    	
-    }
+    }	      
 }

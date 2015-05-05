@@ -1,71 +1,87 @@
 package org.apache.flink;
 
+import java.util.ArrayList;
+
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-public class SAXCalculi {
+public final class SAXCalculi {
 	
-	private double ds_summation; // squares of time serie items
-	private double ds_sum;
-	private double ds_count;
-	private double ds_avg;
-	private double ds_stDev;
-	public double norm_threshold;
+	public static ArrayList<Double> timeSerie;
+	private static double ds_summation; // squares of time serie items
+	private static double ds_sum;
+	private static double ds_count;
+	private static double ds_avg;
+	private static double ds_stDev;
+	public static double norm_threshold;
 	
 	public SAXCalculi() {
-		this.ds_summation = 0D;
-		this.ds_sum = 0D;
-		this.ds_count = 0D;
-		this.ds_avg = 0D;
-		this.ds_stDev = 0D;
-		this.norm_threshold = 2.0;
+		ds_summation = 0D;
+		SAXCalculi.ds_sum = 0D;
+		SAXCalculi.ds_count = 0D;
+		SAXCalculi.ds_avg = 0D;
+		SAXCalculi.ds_stDev = 0D;
+		SAXCalculi.norm_threshold = 2.0;
+		SAXCalculi.timeSerie = new ArrayList<Double>();
 	}
 	
-	public void setSummation(Double value) {
-		this.ds_summation = value;
+	public static void setSummation(Double value) {
+		ds_summation = value;
 	} 
 	
-	public Double getSummation() {
-		return this.ds_summation;
+	public static Double getSummation() {
+		return ds_summation;
 	}
 	
-	public void setSum(Double value) {
-		this.ds_sum = value;
+	public static void setSum(Double value) {
+		ds_sum = value;
 	}
 	
-	public Double getSum() {
-		return this.ds_sum;
+	public static Double getSum() {
+		return ds_sum;
 	}	
 	
-	public void setCount(Double value) {
-		this.ds_count = value;
+	public static void setCount(Double value) {
+		ds_count = value;
 	}
 	
-	public void addCount(Double value) {
-		this.ds_count += value;
+	public static void addCount(Double value) {
+		ds_count += value;
 	}
 	
-	public Double getCount() {
-		return this.ds_count;
+	public static Double getCount() {
+		return ds_count;
 	}	
 	
-	public void setAVG(Double value) {
-		this.ds_avg = value;
+	public static void setAVG(Double value) {
+		ds_avg = value;
 	}	
 	
-	public Double getAVG() {
-		return this.ds_avg;
+	public static Double getAVG() {
+		return ds_avg;
 	}	
 	
-	public void setStDev(Double value) {
-		this.ds_stDev = value;
+	public static void setStDev(Double value) {
+		ds_stDev = value;
 	}	
 	
-	public Double getStDev() {
-		return this.ds_stDev;
+	public static Double getStDev() {
+		return ds_stDev;
+	}
+	
+	public static ArrayList<Double> normalize() {		
+		if(ds_stDev < norm_threshold) {			
+			return timeSerie;
+		}
+		// else, Normalize TimeSerie
+		for(int i=0; i < timeSerie.size(); i++) {
+			double element = (timeSerie.get(i) - ds_avg)/ds_stDev;
+			timeSerie.add(i, element);
+		}
+		return timeSerie;		
 	}	
 	
 	public String toString() {
-		return "ds_count: " + this.getCount() + " | ds_sum: " + this.getSum() + " | ds_avg: " + this.getAVG() + " | stDev: " + this.getStDev();				 
+		return "ds_count: " + SAXCalculi.getCount() + " | ds_sum: " + SAXCalculi.getSum() + " | ds_avg: " + SAXCalculi.getAVG() + " | stDev: " + SAXCalculi.getStDev();				 
 		
 	}
 }

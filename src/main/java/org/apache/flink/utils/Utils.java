@@ -28,7 +28,7 @@ public class Utils {
 		return Y;
 	}
 	
-	private ArrayList<Double> numbersGenerator(Integer length) {		
+	public ArrayList<Double> numbersGenerator(Integer length) {		
 		Random random = new Random(10);
 		int count = 0;			
 		ArrayList<Double> list = new ArrayList();
